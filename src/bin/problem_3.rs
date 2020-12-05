@@ -14,15 +14,12 @@ fn process_map_and_movements() -> usize {
 
 fn process_toboggan_movement(movement: (usize, usize), map: &Vec<String>) -> usize {
     let map_width = map[0].len();
-    let mut trees_encountered = 0;
 
-    for (idx, y_pos) in (movement.1..map.len()).step_by(movement.1).enumerate() {
-        // move toboggan along x
-        let toboggan_x = (movement.0 * (idx + 1)) % map_width;
-        // Check for tree
-        if map[y_pos].chars().nth(toboggan_x).unwrap() == '#' {
-            trees_encountered += 1;
-        }
-    }
-    trees_encountered
+    (movement.1..map.len()).step_by(movement.1).enumerate()
+        .filter(
+            |(idx, y_pos)|
+                map[*y_pos].chars()
+                    .nth((movement.0 * (idx + 1)) % map_width)
+                    .unwrap() == '#'
+        ).count()
 }
