@@ -11,7 +11,7 @@ fn find_missing_seat(all_passes: &mut Vec<i32>) -> i32 {
     (all_passes[0]..*all_passes.last().unwrap())
         .into_iter()
         .filter(|&seat| !all_passes.contains(&(seat as i32)))
-        .collect::<Vec<i32>>()[0]
+        .last().unwrap()
 }
 
 fn decode_all_passes() -> Vec<i32> {
@@ -21,21 +21,13 @@ fn decode_all_passes() -> Vec<i32> {
         .collect()
 }
 
-/// Return the Seat ID of the given boarding pass
 fn decode_pass(boarding_pass: &str) -> i32 {
-    let mut row_range: Vec<i32> = (0..128).collect();
-    let mut column_range: Vec<i32> = (0..8).collect();
-    for current_char in boarding_pass.chars() {
-        if current_char == 'F' {
-            row_range = row_range.iter().take(row_range.len() / 2).map(|&x| x).collect();
-        } else if current_char == 'B' {
-            row_range = row_range.iter().rev().take(row_range.len() / 2).map(|&x| x).rev().collect();
-        } else if current_char == 'L' {
-            column_range = column_range.iter().take(column_range.len() / 2).map(|&x| x).collect();
-        } else if current_char == 'R' {
-            column_range = column_range.iter().rev().take(column_range.len() / 2).map(|&x| x).rev().collect();
-        }
-    }
-
-    (row_range[0] * 8) + column_range[0]
+    let pass: String = boarding_pass.chars()
+        .map(|c| match c {
+            'F' | 'L' => '0',
+            'B' | 'R' => '1',
+            _ => panic!("Invalid character!")
+        })
+        .collect();
+    i32::from_str_radix(&pass, 2).unwrap()
 }
