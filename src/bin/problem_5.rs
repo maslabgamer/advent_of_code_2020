@@ -23,9 +23,6 @@ fn decode_all_passes() -> Vec<i32> {
 
 /// Return the Seat ID of the given boarding pass
 fn decode_pass(boarding_pass: &str) -> i32 {
-    // For each character, constrain the min and max
-    // If char is an F, take the lower half. current_max will go halfway to current_min
-    // If char is B, take the upper half. current_min will go to halfway to current_max
     let mut row_range: Vec<i32> = (0..128).collect();
     let mut column_range: Vec<i32> = (0..8).collect();
     for current_char in boarding_pass.chars() {
