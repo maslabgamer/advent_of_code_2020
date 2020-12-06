@@ -31,13 +31,11 @@ fn process_customs() -> usize {
 /// container - Vector containing the intersection of all the group's answers
 /// Don't return anything, just push it directly onto the container
 fn drain_passes(container: &mut Vec<HashSet<char>>, to_drain: &mut Vec<HashSet<char>>) {
-    let first_item = to_drain[0].clone();
     let mut all_yes = to_drain.drain(..)
-        .fold(
-            first_item,
-            |acc, b| acc.intersection(&b)
-                .into_iter()
-                .map(|c| *c).collect()
-        );
+        .fold_first(
+            |a, b|
+                a.intersection(&b).into_iter()
+                    .map(|c| *c).collect()
+        ).unwrap();
     container.push(all_yes.drain().collect());
 }
