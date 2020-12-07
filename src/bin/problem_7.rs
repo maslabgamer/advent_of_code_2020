@@ -15,9 +15,8 @@ fn main() {
     while let Some(current_bag) = contains.pop() {
         total += current_bag.1;
         if let Some(new_bags) = bag_rules.get(&current_bag.0) {
-            let new_bags: Vec<(String, i32)> = new_bags.iter()
-                .map(|(b, i)| (b.to_string(), i * current_bag.1))
-                .collect();
+            let new_bags= new_bags.iter()
+                .map(|(b, i)| (b.to_string(), i * current_bag.1));
             contains.extend(new_bags);
         }
     }
