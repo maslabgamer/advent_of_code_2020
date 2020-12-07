@@ -32,7 +32,6 @@ fn get_all_gold_contains(bag_rules: &HashMap<String, Vec<(String, i32)>>) -> Has
         // 1. shiny gold bag in list of possible values
         // 2. item we already know can contain a shiny gold bag
         let mut values = value.clone();
-        // println!("1. values = {:?}", values);
         while let Some(current_bag) = values.pop() {
             let current_bag = current_bag.0;
             if current_bag.starts_with("shiny gold") || contains_gold.contains(&current_bag) {
