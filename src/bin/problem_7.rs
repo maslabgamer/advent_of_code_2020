@@ -15,10 +15,9 @@ fn main() {
     while let Some(current_bag) = contains.pop() {
         total += current_bag.1;
         if let Some(new_bags) = bag_rules.get(&current_bag.0) {
-            let mut new_bags = new_bags.clone();
-            for new_bag in new_bags.iter_mut() {
-                new_bag.1 = new_bag.1 * current_bag.1;
-            }
+            let new_bags: Vec<(String, i32)> = new_bags.iter()
+                .map(|(b, i)| (b.to_string(), i * current_bag.1))
+                .collect();
             contains.extend(new_bags);
         }
     }
