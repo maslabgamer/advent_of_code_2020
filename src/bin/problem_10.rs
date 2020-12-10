@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use aoc_2020::utils::read_file;
 
 fn main() {
