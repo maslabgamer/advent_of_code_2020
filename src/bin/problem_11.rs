@@ -75,7 +75,6 @@ fn process_map() -> Vec<Vec<MapCell>> {
                 let occupied_count = adjacents.iter()
                     .filter(|&&a| a == MapCell::Occupied).count();
 
-
                 map_to_update.borrow_mut()[y][x] = match map_to_process[y][x] {
                     MapCell::Occupied => {
                         if occupied_count >= 4 {
@@ -94,8 +93,6 @@ fn process_map() -> Vec<Vec<MapCell>> {
                     MapCell::Floor => MapCell::Floor
                 }
             }
-
-            // println!("row = {:?}", row);
         }
 
         // Determine if changes happened
