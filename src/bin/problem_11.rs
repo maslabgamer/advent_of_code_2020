@@ -2,13 +2,25 @@ use aoc_2020::utils::read_file;
 use std::cell::RefCell;
 use std::time::Instant;
 
+enum OccupiedTechnique {
+    Adjacent,
+    Visible,
+}
+
 fn main() {
     let now = Instant::now();
-    let final_map = process_map();
-    let occupied_seats = final_map.iter()
-        .flatten().into_iter()
+    // Part 1
+    let final_map = process_map(OccupiedTechnique::Adjacent);
+    let occupied_seats = final_map.iter().flatten().into_iter()
         .filter(|&&c| c == MapCell::Occupied).count();
-    println!("There are {} occupied seats", occupied_seats);
+    println!("Part 1. There are {} occupied seats", occupied_seats);
+    println!("{}", now.elapsed().as_millis());
+
+    // Part 2
+    let final_map = process_map(OccupiedTechnique::Visible);
+    let occupied_seats = final_map.iter().flatten().into_iter()
+        .filter(|&&c| c == MapCell::Occupied).count();
+    println!("Part 2. There are {} occupied seats", occupied_seats);
     println!("{}", now.elapsed().as_millis());
 }
 
@@ -30,7 +42,7 @@ impl MapCell {
     }
 }
 
-fn process_map() -> Vec<Vec<MapCell>> {
+fn process_map(occupied_technique: OccupiedTechnique) -> Vec<Vec<MapCell>> {
     let map: Vec<Vec<MapCell>> = read_file("resources/problem_11_input.txt").iter()
         .map(|row| row.chars().map(|c| MapCell::from_char(&c)).collect::<Vec<MapCell>>())
         .collect();
@@ -41,43 +53,68 @@ fn process_map() -> Vec<Vec<MapCell>> {
     let map_to_process: RefCell<Vec<Vec<MapCell>>> = RefCell::new(map.clone());
     let map_to_update: RefCell<Vec<Vec<MapCell>>> = RefCell::new(map.clone());
 
+    let empty_seat_count = match occupied_technique {
+        OccupiedTechnique::Adjacent => 4,
+        OccupiedTechnique::Visible => 5
+    };
+
     let mut map_changed = true;
+
     while map_changed {
+        map_changed = false;
         // Process changes to map
         // let map_to_process = &maps[map_processing_idx];
         for y in 0..row_count {
             let map_to_process = map_to_process.borrow();
-            let row_above = if y > 0 { map_to_process.get(y - 1) } else { None };
-            let row_below = map_to_process.get(y + 1);
-            let row = &map_to_process[y];
 
             for x in 0..column_count {
-                let mut adjacents: Vec<MapCell> = Vec::with_capacity(8);
-
-                // Get adjacent cells from row above
-                get_adjacent_from_row(&mut adjacents, x, &row_above);
-
-                // Get adjacent cells to left and right
-                if x > 0 {
-                    if let Some(left) = row.get(x - 1) {
-                        adjacents.push(left.clone());
+                // Get number of occupied seats nearby based on what we're looking for
+                let occupied_count = match occupied_technique {
+                    // We are only looking for seats occupied adjacent to the current one
+                    OccupiedTechnique::Adjacent => {
+                        let row_above = if y > 0 { map_to_process.get(y - 1) } else { None };
+                        let row_below = map_to_process.get(y + 1);
+                        let row = &map_to_process[y];
+                        let adjacents: Vec<MapCell> = get_adjacent_cells(x, &row_above, &row, &row_below);
+                        // Now that we have adjacents, determine if current cell should change
+                        adjacents.iter().filter(|&&a| a == MapCell::Occupied).count()
                     }
-                }
-                if let Some(right) = row.get(x + 1) {
-                    adjacents.push(right.clone());
-                }
+                    // We are looking for the first occupied seat in each direction
+                    OccupiedTechnique::Visible => {
+                        let mut occupied_count = 0;
+                        // First get everything above the current cell
+                        if y > 0 {
+                            occupied_count += search_rows_for_seats(x, (0..y).rev(), &map_to_process.clone());
+                        } // Above rows
 
-                // Get adjacent cells from row below
-                get_adjacent_from_row(&mut adjacents, x, &row_below);
+                        // Now check everything to left and right
+                        let mut left_found = false;
+                        let mut right_found = false;
+                        let row = &map_to_process[y];
+                        let mut offset = 1;
+                        while (offset <= x || offset < row.len()) && !(left_found && right_found) {
+                            if !left_found && offset <= x {
+                                if let Some(left) = row.get(x - offset) {
+                                    process_map_cell_found(&left, &mut left_found, &mut occupied_count);
+                                }
+                            }
+                            if !right_found {
+                                if let Some(right) = row.get(x + offset) {
+                                    process_map_cell_found(&right, &mut right_found, &mut occupied_count);
+                                }
+                            }
+                            offset += 1;
+                        }
 
-                // Now that we have adjacents, determine if current cell should change
-                // Count the cell types
-                let occupied_count = adjacents.iter()
-                    .filter(|&&a| a == MapCell::Occupied).count();
+                        // Now everything below!
+                        occupied_count + search_rows_for_seats(x, (y..row_count).into_iter().skip(1), &map_to_process.clone())
+                    } // Visible check
+                };
 
                 map_to_update.borrow_mut()[y][x] = match map_to_process[y][x] {
                     MapCell::Occupied => {
-                        if occupied_count >= 4 {
+                        if occupied_count >= empty_seat_count {
+                            map_changed = true;
                             MapCell::Empty
                         } else {
                             MapCell::Occupied
@@ -85,6 +122,7 @@ fn process_map() -> Vec<Vec<MapCell>> {
                     }
                     MapCell::Empty => {
                         if occupied_count == 0 {
+                            map_changed = true;
                             MapCell::Occupied
                         } else {
                             MapCell::Empty
@@ -95,21 +133,76 @@ fn process_map() -> Vec<Vec<MapCell>> {
             }
         }
 
-        // Determine if changes happened
-        map_changed = false;
-        for y in 0..row_count {
-            for x in 0..column_count {
-                let process_cell = map_to_process.borrow()[y][x];
-                let update_cell = map_to_update.borrow()[y][x];
-                if process_cell != update_cell {
-                    map_changed = true;
-                }
-            }
-        }
         map_to_process.swap(&map_to_update);
     }
     let map_to_process = map_to_process.borrow().clone();
     map_to_process
+}
+
+fn search_rows_for_seats<>(x: usize, iterator: impl Iterator<Item=usize>, map_to_process: &Vec<Vec<MapCell>>) -> usize {
+    let mut vertical_found = false;
+    let mut vertical_left_found = false;
+    let mut vertical_right_found = false;
+    let mut occupied_count = 0;
+    for (offset, search_y) in iterator.enumerate() {
+        if vertical_left_found && vertical_found && vertical_right_found {
+            break;
+        }
+        if let Some(row_below) = map_to_process.get(search_y) {
+            let offset = offset + 1;
+            if !vertical_found {
+                if let Some(&below) = row_below.get(x) {
+                    process_map_cell_found(&below, &mut vertical_found, &mut occupied_count);
+                }
+            }
+            if !vertical_left_found && offset <= x {
+                if let Some(&below_left) = row_below.get(x - offset) {
+                    process_map_cell_found(&below_left, &mut vertical_left_found, &mut occupied_count);
+                }
+            }
+            if !vertical_right_found {
+                if let Some(&below_right) = row_below.get(x + offset) {
+                    process_map_cell_found(&below_right, &mut vertical_right_found, &mut occupied_count);
+                }
+            }
+        }
+    }
+    occupied_count
+}
+
+fn process_map_cell_found(cell: &MapCell, flag: &mut bool, occupied_count: &mut usize) {
+    match cell {
+        MapCell::Occupied => {
+            *occupied_count += 1;
+            *flag = true;
+        }
+        MapCell::Empty => *flag = true,
+        MapCell::Floor => {}
+    };
+}
+
+fn get_adjacent_cells(
+    x: usize,
+    row_above: &Option<&Vec<MapCell>>,
+    current_row: &Vec<MapCell>,
+    row_below: &Option<&Vec<MapCell>>,
+) -> Vec<MapCell> {
+    let mut adjacents: Vec<MapCell> = Vec::with_capacity(8);
+    // Get adjacent cells from row above
+    get_adjacent_from_row(&mut adjacents, x, &row_above);
+    // Get adjacent cells to left and right
+    if x > 0 {
+        if let Some(left) = current_row.get(x - 1) {
+            adjacents.push(left.clone());
+        }
+    }
+    if let Some(right) = current_row.get(x + 1) {
+        adjacents.push(right.clone());
+    }
+    // Get adjacent cells from row below
+    get_adjacent_from_row(&mut adjacents, x, &row_below);
+
+    adjacents
 }
 
 fn get_adjacent_from_row(adjacents: &mut Vec<MapCell>, x: usize, row: &Option<&Vec<MapCell>>) {
