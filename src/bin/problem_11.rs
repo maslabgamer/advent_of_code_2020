@@ -84,8 +84,57 @@ fn process_map(occupied_technique: OccupiedTechnique) -> Vec<Vec<MapCell>> {
                         let mut occupied_count = 0;
                         // First get everything above the current cell
                         if y > 0 {
-                            occupied_count += search_rows_for_seats(x, (0..y).rev(), &map_to_process.clone());
-                        } // Above rows
+                            // Upper search
+                            for offset in 1..map_to_process.len() {
+                                if offset > y {
+                                    break;
+                                }
+                                match map_to_process[y - offset][x] {
+                                    MapCell::Occupied => {
+                                        occupied_count += 1;
+                                        break;
+                                    }
+                                    MapCell::Empty => {
+                                        break;
+                                    }
+                                    MapCell::Floor => {}
+                                }
+                            }
+
+                            // Up and left
+                            for offset in 1..map_to_process.len() {
+                                if offset > x || offset > y {
+                                    break;
+                                }
+                                match map_to_process[y - offset][x - offset] {
+                                    MapCell::Occupied => {
+                                        occupied_count += 1;
+                                        break;
+                                    }
+                                    MapCell::Empty => {
+                                        break;
+                                    }
+                                    MapCell::Floor => {}
+                                }
+                            }
+
+                            // Up and right
+                            for offset in 1..map_to_process.len() {
+                                if offset > y || x + offset >= map_to_process[y].len() {
+                                    break;
+                                }
+                                match map_to_process[y - offset][x + offset] {
+                                    MapCell::Occupied => {
+                                        occupied_count += 1;
+                                        break;
+                                    }
+                                    MapCell::Empty => {
+                                        break;
+                                    }
+                                    MapCell::Floor => {}
+                                }
+                            }
+                        }
 
                         // Now check everything to left and right
                         let mut left_found = false;
@@ -107,7 +156,56 @@ fn process_map(occupied_technique: OccupiedTechnique) -> Vec<Vec<MapCell>> {
                         }
 
                         // Now everything below!
-                        occupied_count + search_rows_for_seats(x, (y..row_count).into_iter().skip(1), &map_to_process.clone())
+                        for offset in 1..map_to_process.len() {
+                            if y + offset >= map_to_process.len() {
+                                break;
+                            }
+                            match map_to_process[y + offset][x] {
+                                MapCell::Occupied => {
+                                    occupied_count += 1;
+                                    break;
+                                }
+                                MapCell::Empty => {
+                                    break;
+                                }
+                                MapCell::Floor => {}
+                            }
+                        }
+
+                        // Below and left
+                        for offset in 1..map_to_process.len() {
+                            if offset > x || y + offset >= map_to_process.len() {
+                                break;
+                            }
+                            match map_to_process[y + offset][x - offset] {
+                                MapCell::Occupied => {
+                                    occupied_count += 1;
+                                    break;
+                                }
+                                MapCell::Empty => {
+                                    break;
+                                }
+                                MapCell::Floor => {}
+                            }
+                        }
+
+                        // Below and right
+                        for offset in 1..map_to_process.len() {
+                            if x + offset >= row.len() || y + offset >= map_to_process.len() {
+                                break;
+                            }
+                            match map_to_process[y + offset][x + offset] {
+                                MapCell::Occupied => {
+                                    occupied_count += 1;
+                                    break;
+                                }
+                                MapCell::Empty => {
+                                    break;
+                                }
+                                MapCell::Floor => {}
+                            }
+                        }
+                        occupied_count
                     } // Visible check
                 };
 
@@ -139,37 +237,7 @@ fn process_map(occupied_technique: OccupiedTechnique) -> Vec<Vec<MapCell>> {
     map_to_process
 }
 
-fn search_rows_for_seats<>(x: usize, iterator: impl Iterator<Item=usize>, map_to_process: &Vec<Vec<MapCell>>) -> usize {
-    let mut vertical_found = false;
-    let mut vertical_left_found = false;
-    let mut vertical_right_found = false;
-    let mut occupied_count = 0;
-    for (offset, search_y) in iterator.enumerate() {
-        if vertical_left_found && vertical_found && vertical_right_found {
-            break;
-        }
-        if let Some(row_below) = map_to_process.get(search_y) {
-            let offset = offset + 1;
-            if !vertical_found {
-                if let Some(&below) = row_below.get(x) {
-                    process_map_cell_found(&below, &mut vertical_found, &mut occupied_count);
-                }
-            }
-            if !vertical_left_found && offset <= x {
-                if let Some(&below_left) = row_below.get(x - offset) {
-                    process_map_cell_found(&below_left, &mut vertical_left_found, &mut occupied_count);
-                }
-            }
-            if !vertical_right_found {
-                if let Some(&below_right) = row_below.get(x + offset) {
-                    process_map_cell_found(&below_right, &mut vertical_right_found, &mut occupied_count);
-                }
-            }
-        }
-    }
-    occupied_count
-}
-
+#[inline]
 fn process_map_cell_found(cell: &MapCell, flag: &mut bool, occupied_count: &mut usize) {
     match cell {
         MapCell::Occupied => {
@@ -181,6 +249,7 @@ fn process_map_cell_found(cell: &MapCell, flag: &mut bool, occupied_count: &mut 
     };
 }
 
+#[inline]
 fn get_adjacent_cells(
     x: usize,
     row_above: &Option<&Vec<MapCell>>,
@@ -205,6 +274,7 @@ fn get_adjacent_cells(
     adjacents
 }
 
+#[inline]
 fn get_adjacent_from_row(adjacents: &mut Vec<MapCell>, x: usize, row: &Option<&Vec<MapCell>>) {
     if let Some(row) = row {
         if x > 0 {
