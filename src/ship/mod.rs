@@ -78,49 +78,47 @@ impl Ship {
     }
 
     pub fn process_commands(&mut self, command_list: &[u8]) {
-        let mut scan_idx = 0;
-        while scan_idx < command_list.len() {
-            let command: char = command_list[scan_idx].into();
-            if command == '\n' {
-                scan_idx += 1;
+        let mut command_list = command_list;
+        while let Some(command) = command_list.first() {
+            command_list = &command_list[1..];
+            if *command == b'\n' {
                 continue;
             }
-            let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[scan_idx + 1..]).unwrap();
-            scan_idx += read_count + 1;
-
-            self.parse_direction(command, value);
+            let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[..]).unwrap();
+            self.parse_direction(*command, value);
+            command_list = &command_list[read_count..];
         }
     }
 
-    pub fn parse_direction(&mut self, direction: char, value: i16) {
+    pub fn parse_direction(&mut self, direction: u8, value: i16) {
         match &mut self.waypoint {
             None => {
                 match direction {
                     // First handle exact direction instructions
-                    'N' => self.move_ship(Direction::North, value),
-                    'S' => self.move_ship(Direction::South, value),
-                    'E' => self.move_ship(Direction::East, value),
-                    'W' => self.move_ship(Direction::West, value),
+                    b'N' => self.move_ship(Direction::North, value),
+                    b'S' => self.move_ship(Direction::South, value),
+                    b'E' => self.move_ship(Direction::East, value),
+                    b'W' => self.move_ship(Direction::West, value),
                     // Now handle turns
-                    'L' => self.headings.rotate_left((value / 90) as usize),
-                    'R' => self.headings.rotate_right((value / 90) as usize),
+                    b'L' => self.headings.rotate_left((value / 90) as usize),
+                    b'R' => self.headings.rotate_right((value / 90) as usize),
                     // Handle forward
-                    'F' => self.move_ship(self.headings[0].clone(), value),
-                    _ => panic!("Invalid command!")
+                    b'F' => self.move_ship(self.headings[0].clone(), value),
+                    _ => panic!("Invalid command! {}", direction)
                 }
             }
             Some(waypoint) => {
                 match direction {
                     // First handle exact direction instructions
-                    'N' => waypoint.y += value,
-                    'S' => waypoint.y -= value,
-                    'E' => waypoint.x += value,
-                    'W' => waypoint.x -= value,
+                    b'N' => waypoint.y += value,
+                    b'S' => waypoint.y -= value,
+                    b'E' => waypoint.x += value,
+                    b'W' => waypoint.x -= value,
                     // Now handle rotations
-                    'L' => waypoint.rotate(value),
-                    'R' => waypoint.rotate(-value),
+                    b'L' => waypoint.rotate(value),
+                    b'R' => waypoint.rotate(-value),
                     // Move ship relative to waypoint
-                    'F' => {
+                    b'F' => {
                         self.vertical_distance_traveled += (value * waypoint.y) as i32;
                         self.horizontal_distance_traveled += (value * waypoint.x) as i32;
                     }
