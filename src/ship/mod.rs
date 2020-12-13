@@ -1,16 +1,14 @@
-use std::f32::consts::PI;
-
 pub fn run_base() {
     let directions = include_str!("../../resources/problem_12_input.txt").lines().collect::<Vec<&str>>();
     let mut ship = Ship::new(false);
     directions.iter().for_each(|direction| ship.parse_direction(direction));
     let manhattan_distance = ship.get_total_distance_traveled();
-    println!("Part 1. Manhattan distance from start = {}", manhattan_distance);
+    assert_eq!(962, manhattan_distance);
 
     let mut ship = Ship::new(true);
     directions.iter().for_each(|direction| ship.parse_direction(direction));
     let manhattan_distance = ship.get_total_distance_traveled();
-    println!("Part 2. Manhattan distance from start = {}", manhattan_distance);
+    assert_eq!(56135, manhattan_distance);
 }
 
 #[derive(Clone, Debug)]
@@ -32,14 +30,24 @@ impl Waypoint {
         Waypoint { x, y }
     }
 
-    fn rotate(&mut self, degrees: f32) {
+    fn rotate(&mut self, degrees: i32) {
+        let sin_res = match degrees {
+            90 | -270 => 1,
+            180 | -180 => 0,
+            270 | -90 => -1,
+            _ => panic!("Invalid degrees amount!")
+        };
+        let cos_res = match degrees {
+            90 | -90 | 270 | -270 => 0,
+            180 | -180 => -1,
+            _ => panic!("Invalid degrees amount!")
+        };
         // Trig functions expect radians
-        let radians = degrees * (PI / 180f32);
-        let new_x = (self.x as f32 * radians.cos()) - (self.y as f32 * radians.sin());
-        let new_y = (self.y as f32 * radians.cos()) + (self.x as f32 * radians.sin());
+        let new_x = (self.x * cos_res) - (self.y * sin_res);
+        let new_y = (self.y * cos_res) + (self.x * sin_res);
         // Round to nearest int due to floating point nonsense
-        self.x = new_x.round() as i32;
-        self.y = new_y.round() as i32;
+        self.x = new_x;
+        self.y = new_y;
     }
 }
 
@@ -97,8 +105,8 @@ impl Ship {
                     'E' => waypoint.x += value,
                     'W' => waypoint.x -= value,
                     // Now handle rotations
-                    'L' => waypoint.rotate(value as f32),
-                    'R' => waypoint.rotate(-(value as f32)),
+                    'L' => waypoint.rotate(value),
+                    'R' => waypoint.rotate(-value),
                     // Move ship relative to waypoint
                     'F' => {
                         self.vertical_distance_traveled += value * waypoint.y;
