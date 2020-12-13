@@ -53,21 +53,26 @@ impl Waypoint {
 
 pub struct Ship {
     // Current heading will be first item in this vector (rotate vector to change heading)
+    heading_idx: usize,
     headings: Vec<Direction>,
-    waypoint: Option<Waypoint>,
+    waypoint: Waypoint,
+    movement_func: fn(&mut Ship, u8, i16),
     vertical_distance_traveled: i32,
     horizontal_distance_traveled: i32,
 }
 
 impl Ship {
     pub fn new(has_waypoint: bool) -> Self {
-        let waypoint = match has_waypoint {
-            true => Some(Waypoint::new(10 , 1)),
-            false => None
+        let movement_func = match has_waypoint {
+            true => Ship::waypoint_movement,
+            false => Ship::no_waypoint_movement,
         };
+
         Ship {
+            heading_idx: 0,
             headings: vec![Direction::East, Direction::North, Direction::West, Direction::South],
-            waypoint,
+            waypoint: Waypoint::new(10 , 1),
+            movement_func,
             vertical_distance_traveled: 0,
             horizontal_distance_traveled: 0,
         }
@@ -80,52 +85,53 @@ impl Ship {
     pub fn process_commands(&mut self, command_list: &[u8]) {
         let mut command_list = command_list;
         while let Some(command) = command_list.first() {
-            command_list = &command_list[1..];
             if *command == b'\n' {
+                command_list = &command_list[1..];
                 continue;
             }
-            let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[..]).unwrap();
-            self.parse_direction(*command, value);
-            command_list = &command_list[read_count..];
+            let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[1..]).unwrap();
+            (self.movement_func)(self, *command, value);
+            command_list = &command_list[read_count + 1..];
         }
     }
 
-    pub fn parse_direction(&mut self, direction: u8, value: i16) {
-        match &mut self.waypoint {
-            None => {
-                match direction {
-                    // First handle exact direction instructions
-                    b'N' => self.move_ship(Direction::North, value),
-                    b'S' => self.move_ship(Direction::South, value),
-                    b'E' => self.move_ship(Direction::East, value),
-                    b'W' => self.move_ship(Direction::West, value),
-                    // Now handle turns
-                    b'L' => self.headings.rotate_left((value / 90) as usize),
-                    b'R' => self.headings.rotate_right((value / 90) as usize),
-                    // Handle forward
-                    b'F' => self.move_ship(self.headings[0].clone(), value),
-                    _ => panic!("Invalid command! {}", direction)
-                }
+    #[inline]
+    fn waypoint_movement(&mut self, direction: u8, value: i16) {
+        match direction {
+            // First handle exact direction instructions
+            b'N' => self.waypoint.y += value,
+            b'S' => self.waypoint.y -= value,
+            b'E' => self.waypoint.x += value,
+            b'W' => self.waypoint.x -= value,
+            // Now handle rotations
+            b'L' => self.waypoint.rotate(value),
+            b'R' => self.waypoint.rotate(-value),
+            // Move ship relative to waypoint
+            b'F' => {
+                self.vertical_distance_traveled += (value * self.waypoint.y) as i32;
+                self.horizontal_distance_traveled += (value * self.waypoint.x) as i32;
             }
-            Some(waypoint) => {
-                match direction {
-                    // First handle exact direction instructions
-                    b'N' => waypoint.y += value,
-                    b'S' => waypoint.y -= value,
-                    b'E' => waypoint.x += value,
-                    b'W' => waypoint.x -= value,
-                    // Now handle rotations
-                    b'L' => waypoint.rotate(value),
-                    b'R' => waypoint.rotate(-value),
-                    // Move ship relative to waypoint
-                    b'F' => {
-                        self.vertical_distance_traveled += (value * waypoint.y) as i32;
-                        self.horizontal_distance_traveled += (value * waypoint.x) as i32;
-                    }
-                    _ => panic!("Invalid command!")
-                }
-            }
-        };
+            _ => panic!("Invalid command!")
+        }
+    }
+
+    #[inline]
+    fn no_waypoint_movement(&mut self, direction: u8, value: i16) {
+        match direction {
+            // First handle exact direction instructions
+            b'N' => self.move_ship(Direction::North, value),
+            b'S' => self.move_ship(Direction::South, value),
+            b'E' => self.move_ship(Direction::East, value),
+            b'W' => self.move_ship(Direction::West, value),
+            // Now handle turns
+            // b'L' => self.headings.rotate_left((value / 90) as usize),
+            b'L' => self.heading_idx = (self.heading_idx + (value / 90) as usize) % 4,
+            b'R' => self.heading_idx = (self.heading_idx - (value / 90) as usize) % 4,
+            // b'R' => self.headings.rotate_right((value / 90) as usize),
+            // Handle forward
+            b'F' => self.move_ship(self.headings[self.heading_idx].clone(), value),
+            _ => panic!("Invalid command! {}", direction)
+        }
     }
 
     fn move_ship(&mut self, direction: Direction, distance: i16) {
