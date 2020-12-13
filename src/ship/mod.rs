@@ -85,13 +85,9 @@ impl Ship {
     pub fn process_commands(&mut self, command_list: &[u8]) {
         let mut command_list = command_list;
         while let Some(command) = command_list.first() {
-            if *command == b'\n' {
-                command_list = &command_list[1..];
-                continue;
-            }
             let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[1..]).unwrap();
             (self.movement_func)(self, *command, value);
-            command_list = &command_list[read_count + 1..];
+            command_list = &command_list[read_count + 2..];
         }
     }
 
