@@ -1,12 +1,12 @@
 pub fn run_base() {
-    let directions = include_str!("../../resources/problem_12_input.txt").lines().collect::<Vec<&str>>();
+    let directions = include_bytes!("../../resources/problem_12_input.txt");
     let mut ship = Ship::new(false);
-    directions.iter().for_each(|direction| ship.parse_direction(direction));
+    ship.process_commands(directions);
     let manhattan_distance = ship.get_total_distance_traveled();
     assert_eq!(962, manhattan_distance);
 
     let mut ship = Ship::new(true);
-    directions.iter().for_each(|direction| ship.parse_direction(direction));
+    ship.process_commands(directions);
     let manhattan_distance = ship.get_total_distance_traveled();
     assert_eq!(56135, manhattan_distance);
 }
@@ -21,16 +21,16 @@ enum Direction {
 
 #[derive(Debug)]
 struct Waypoint {
-    x: i32,
-    y: i32,
+    x: i16,
+    y: i16,
 }
 
 impl Waypoint {
-    fn new(x: i32, y: i32) -> Self {
+    fn new(x: i16, y: i16) -> Self {
         Waypoint { x, y }
     }
 
-    fn rotate(&mut self, degrees: i32) {
+    fn rotate(&mut self, degrees: i16) {
         let sin_res = match degrees {
             90 | -270 => 1,
             180 | -180 => 0,
@@ -77,10 +77,22 @@ impl Ship {
         self.horizontal_distance_traveled.abs() + self.vertical_distance_traveled.abs()
     }
 
-    pub fn parse_direction(&mut self, command: &str) {
-        let direction = command.chars().next().unwrap();
-        let value: i32 = command[1..].parse::<i32>().unwrap();
+    pub fn process_commands(&mut self, command_list: &[u8]) {
+        let mut scan_idx = 0;
+        while scan_idx < command_list.len() {
+            let command: char = command_list[scan_idx].into();
+            if command == '\n' {
+                scan_idx += 1;
+                continue;
+            }
+            let (value, read_count) = lexical::parse_partial::<i16, _>(&command_list[scan_idx + 1..]).unwrap();
+            scan_idx += read_count + 1;
 
+            self.parse_direction(command, value);
+        }
+    }
+
+    pub fn parse_direction(&mut self, direction: char, value: i16) {
         match &mut self.waypoint {
             None => {
                 match direction {
@@ -109,8 +121,8 @@ impl Ship {
                     'R' => waypoint.rotate(-value),
                     // Move ship relative to waypoint
                     'F' => {
-                        self.vertical_distance_traveled += value * waypoint.y;
-                        self.horizontal_distance_traveled += value * waypoint.x;
+                        self.vertical_distance_traveled += (value * waypoint.y) as i32;
+                        self.horizontal_distance_traveled += (value * waypoint.x) as i32;
                     }
                     _ => panic!("Invalid command!")
                 }
@@ -118,12 +130,12 @@ impl Ship {
         };
     }
 
-    fn move_ship(&mut self, direction: Direction, distance: i32) {
+    fn move_ship(&mut self, direction: Direction, distance: i16) {
         match direction {
-            Direction::North => self.vertical_distance_traveled += distance,
-            Direction::East => self.horizontal_distance_traveled += distance,
-            Direction::South => self.vertical_distance_traveled -= distance,
-            Direction::West => self.horizontal_distance_traveled -= distance
+            Direction::North => self.vertical_distance_traveled += distance as i32,
+            Direction::East => self.horizontal_distance_traveled += distance as i32,
+            Direction::South => self.vertical_distance_traveled -= distance as i32,
+            Direction::West => self.horizontal_distance_traveled -= distance as i32
         };
     }
 }
