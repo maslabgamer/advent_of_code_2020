@@ -1,6 +1,4 @@
 #![feature(iterator_fold_self)]
-
-use aoc_2020::utils::read_file;
 use std::collections::HashSet;
 
 fn main() {
@@ -8,7 +6,7 @@ fn main() {
 }
 
 fn process_customs() -> usize {
-    let customs_file = read_file("resources/problem_6_input.txt");
+    let customs_file = include_str!("../../resources/problem_6_input.txt").lines();
     let mut groups_answers: Vec<HashSet<char>> = vec![];
     let mut current_group: Vec<HashSet<char>> = vec![];
 

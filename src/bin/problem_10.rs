@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use aoc_2020::utils::read_file;
 
 fn main() {
     let output = process_input();
@@ -9,7 +8,7 @@ fn main() {
 }
 
 fn process_input() -> (HashMap<usize, usize>, usize) {
-    let mut adapters: Vec<usize> = read_file("resources/problem_10_input.txt").iter()
+    let mut adapters: Vec<usize> = include_str!("../../resources/problem_10_input.txt").lines()
         .map(|i| i.parse::<usize>().unwrap())
         .collect();
     // Add outlet in (assume 0 joltage)

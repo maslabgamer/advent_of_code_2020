@@ -1,5 +1,18 @@
 use std::f32::consts::PI;
 
+pub fn run_base() {
+    let directions = include_str!("../../resources/problem_12_input.txt").lines().collect::<Vec<&str>>();
+    let mut ship = Ship::new(false);
+    directions.iter().for_each(|direction| ship.parse_direction(direction));
+    let manhattan_distance = ship.get_total_distance_traveled();
+    println!("Part 1. Manhattan distance from start = {}", manhattan_distance);
+
+    let mut ship = Ship::new(true);
+    directions.iter().for_each(|direction| ship.parse_direction(direction));
+    let manhattan_distance = ship.get_total_distance_traveled();
+    println!("Part 2. Manhattan distance from start = {}", manhattan_distance);
+}
+
 #[derive(Clone, Debug)]
 enum Direction {
     North,
@@ -57,9 +70,8 @@ impl Ship {
     }
 
     pub fn parse_direction(&mut self, command: &str) {
-        let mut command_iter = command.chars();
-        let direction = command_iter.next().unwrap();
-        let value: i32 = command_iter.into_iter().collect::<String>().parse::<i32>().unwrap();
+        let direction = command.chars().next().unwrap();
+        let value: i32 = command[1..].parse::<i32>().unwrap();
 
         match &mut self.waypoint {
             None => {

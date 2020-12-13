@@ -1,4 +1,3 @@
-use aoc_2020::utils::read_file;
 use std::cell::RefCell;
 use std::time::Instant;
 
@@ -43,7 +42,7 @@ impl MapCell {
 }
 
 fn process_map(occupied_technique: OccupiedTechnique) -> Vec<Vec<MapCell>> {
-    let map: Vec<Vec<MapCell>> = read_file("resources/problem_11_input.txt").iter()
+    let map: Vec<Vec<MapCell>> = include_str!("../../resources/problem_11_input.txt").lines()
         .map(|row| row.chars().map(|c| MapCell::from_char(&c)).collect::<Vec<MapCell>>())
         .collect();
 

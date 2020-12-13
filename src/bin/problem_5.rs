@@ -1,5 +1,3 @@
-use aoc_2020::utils::read_file;
-
 fn main() {
     let all_passes = decode_all_passes();
     println!("Problem 5 part 1 solution: {}", all_passes.iter().max().unwrap());
@@ -14,8 +12,7 @@ fn find_missing_seat(all_passes: &mut Vec<i32>) -> i32 {
 }
 
 fn decode_all_passes() -> Vec<i32> {
-    let boarding_passes = read_file("resources/problem_5_input.txt");
-    boarding_passes.iter()
+    include_str!("../../resources/problem_5_input.txt").lines()
         .map(|pass| decode_pass(&pass))
         .collect()
 }

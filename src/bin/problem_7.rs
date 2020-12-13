@@ -1,4 +1,3 @@
-use aoc_2020::utils::read_file;
 use std::collections::{HashMap, HashSet};
 use regex::Regex;
 
@@ -46,7 +45,7 @@ fn get_all_gold_contains(bag_rules: &HashMap<String, Vec<(String, i32)>>) -> Has
 }
 
 fn setup_bag_rules() -> HashMap<String, Vec<(String, i32)>> {
-    let bag_rules_file = read_file("resources/problem_7_input.txt");
+    let bag_rules_file: Vec<&str> = include_str!("../../resources/problem_7_input.txt").lines().collect();
     let mut bag_rules: HashMap<String, Vec<(String, i32)>> = HashMap::with_capacity(bag_rules_file.len());
     let re = Regex::new(r"(?P<number>\d) (?P<color>.*) bag").unwrap();
 

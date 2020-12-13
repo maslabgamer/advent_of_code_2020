@@ -1,12 +1,10 @@
-use aoc_2020::utils::read_file;
-
 fn main() {
     println!("Problem 1 solution: {}", process_input());
 }
 
 fn process_input() -> i32 {
-    let numbers: Vec<i32> = read_file("resources/problem_1_input.txt")
-        .iter()
+    let numbers: Vec<i32> = include_str!("../../resources/problem_1_input.txt")
+        .lines()
         .map(|number| number.parse::<i32>().unwrap())
         .collect();
     for i in 0..numbers.len() - 2 {

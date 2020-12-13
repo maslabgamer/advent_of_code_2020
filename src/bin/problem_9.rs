@@ -1,5 +1,3 @@
-use aoc_2020::utils::read_file;
-
 fn main() {
     let response = process_input(25);
     println!("Problem 9 part 1 solution: {}", response.first_invalid);
@@ -12,7 +10,7 @@ struct Answer {
 }
 
 fn process_input(preamble_size: usize) -> Answer {
-    let input: Vec<u64> = read_file("resources/problem_9_input.txt").iter()
+    let input: Vec<u64> = include_str!("../../resources/problem_9_input.txt").lines()
         .map(|i| i.parse::<u64>().unwrap())
         .collect();
 

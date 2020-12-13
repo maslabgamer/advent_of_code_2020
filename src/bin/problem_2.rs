@@ -1,4 +1,3 @@
-use aoc_2020::utils::read_file;
 use regex::Regex;
 
 #[derive(PartialEq)]
@@ -13,7 +12,7 @@ fn main() {
 }
 
 fn problem_2(function_selection: FuncSelect) -> i32 {
-    let passwords = read_file("resources/problem_2_input.txt");
+    let passwords: Vec<&str> = include_str!("../../resources/problem_2_input.txt").lines().collect();
     let mut valid_pass_count: i32 = 0;
 
     let re = Regex::new(r"(?P<min>\d*)-(?P<max>\d*) (?P<char>.): (?P<password>.*)").unwrap();

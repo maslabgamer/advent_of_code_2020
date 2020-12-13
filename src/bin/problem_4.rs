@@ -1,4 +1,3 @@
-use aoc_2020::utils::read_file;
 use aoc_2020::passport::Passport;
 
 fn main() {
@@ -6,7 +5,7 @@ fn main() {
 }
 
 fn process_problem() -> usize {
-    let passports_lines = read_file("resources/problem_4_input.txt");
+    let passports_lines: Vec<&str> = include_str!("../../resources/problem_4_input.txt").lines().collect();
 
     let mut passports = vec![Passport::new()];
 
