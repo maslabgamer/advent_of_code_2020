@@ -12,10 +12,15 @@ criterion = "0.3"
 [dependencies]
 regex = "1.4.2"
 lexical = "5.2.0"
+ring-algorithm = "0.2.2"
 
 [profile.dev]
 opt-level = 3
 
 [[bench]]
 name = "problem_12_benchmark"
+harness = false
+
+[[bench]]
+name = "problem_13_benchmark"
 harness = false
