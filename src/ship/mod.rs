@@ -124,10 +124,8 @@ impl Ship {
             b'E' => self.move_ship(Direction::East, value),
             b'W' => self.move_ship(Direction::West, value),
             // Now handle turns
-            // b'L' => self.headings.rotate_left((value / 90) as usize),
             b'L' => self.heading_idx = (self.heading_idx + (value / 90) as usize) % 4,
             b'R' => self.heading_idx = (self.heading_idx - (value / 90) as usize) % 4,
-            // b'R' => self.headings.rotate_right((value / 90) as usize),
             // Handle forward
             b'F' => self.move_ship(self.headings[self.heading_idx].clone(), value),
             _ => panic!("Invalid command! {}", direction)
