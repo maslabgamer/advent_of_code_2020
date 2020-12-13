@@ -38,7 +38,7 @@ pub struct Processor {
 }
 
 impl Processor {
-    pub fn new(program: &Vec<String>) -> Self {
+    pub fn new(program: &Vec<&str>) -> Self {
         let program = program.iter()
             .map(|op| Processor::parse_command(&op))
             .collect();
