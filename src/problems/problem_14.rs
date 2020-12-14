@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+// Part 1
 pub fn initialize_memory(input: &[u8]) -> u64 {
     let mut input = input;
     let mut mask: &[u8] = &[0];
@@ -32,18 +33,72 @@ fn apply_mask(mut number: u64, mask: &[u8]) -> u64 {
     number
 }
 
+// Part 2
+pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
+    let mut input = input;
+    let mut mask: &[u8] = &[0];
+    let mut memory: HashMap<u64, u64> = HashMap::new();
+
+    while let Some(_) = input.first() {
+        let command = &input[1..4];
+        if command == b"ask" {
+            mask = &input[7..43];
+            input = &input[44..];
+        } else if command == b"em[" {
+            let (memory_index, index_read_count) = lexical::parse_partial::<u64, _>(&input[4..]).unwrap();
+            let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
+            let mut memory_addresses: Vec<u64> = vec![];
+            apply_mask_decoding(&mut memory_addresses, memory_index, mask);
+            for address in memory_addresses {
+                memory.insert(address, number);
+            }
+            input = &input[9 + index_read_count + num_read_count..];
+        }
+    }
+
+    memory.values().sum()
+}
+
+fn apply_mask_decoding(memory_addresses: &mut Vec<u64>, memory_idx: u64, mask: &[u8]) {
+    let first = mask.first();
+    match first {
+        None => {
+            memory_addresses.push(memory_idx)
+        },
+        Some(c) => {
+            match c {
+                b'0' => {
+                    apply_mask_decoding(memory_addresses, memory_idx, &mask[1..]);
+                },
+                b'1' => {
+                    let memory_idx = memory_idx | 1 << mask.len() - 1;
+                    apply_mask_decoding(memory_addresses, memory_idx, &mask[1..]);
+                },
+                b'X' => {
+                    let new_memory_idx = memory_idx & !(1 << mask.len() - 1);
+                    apply_mask_decoding(memory_addresses, new_memory_idx, &mask[1..]);
+                    let new_memory_idx = memory_idx | 1 << mask.len() - 1;
+                    apply_mask_decoding(memory_addresses, new_memory_idx, &mask[1..]);
+                }
+                &_ => panic!("Invalid char"),
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::problems::problem_14::initialize_memory;
+    use crate::problems::problem_14::{initialize_memory, initialize_memory_decoder};
 
     #[test]
     fn part_one() {
         let input = include_bytes!("../../resources/problem_14_input.txt");
-        assert_eq!(17481577045893, initialize_memory(input))
+        assert_eq!(17481577045893, initialize_memory(input));
     }
 
     #[test]
     fn part_two() {
-
+        let input = include_bytes!("../../resources/problem_14_input.txt");
+        assert_eq!(4160009892257, initialize_memory_decoder(input))
     }
 }
