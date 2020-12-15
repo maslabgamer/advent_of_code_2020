@@ -3,7 +3,7 @@ use std::collections::HashMap;
 fn determine_2020th_step(input: &[usize], steps: usize) -> usize {
     let mut memory: HashMap<usize, usize> = input.iter().enumerate().map(|(idx, &number)| (number, idx + 1)).collect();
     (input.len()..steps).into_iter()
-        .fold(*input.last().unwrap(), |mut acc, turn_counter|
+        .fold(*input.last().unwrap(), |acc, turn_counter|
             match memory.insert(acc, turn_counter) {
                 None => 0,
                 Some(existing) => turn_counter - existing
