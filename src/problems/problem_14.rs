@@ -37,7 +37,8 @@ fn apply_mask(mut number: u64, mask: &[u8]) -> u64 {
 pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
     let mut input = input;
     let mut mask: &[u8] = &[0];
-    let mut memory: HashMap<u64, u64> = HashMap::new();
+    let mut memory: HashMap<u64, u64> = HashMap::with_capacity(600 * 36);
+    let mut memory_addresses: Vec<u64> = Vec::with_capacity(512);
 
     while let Some(_) = input.first() {
         let command = &input[1..4];
@@ -47,11 +48,11 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
         } else if command == b"em[" {
             let (memory_index, index_read_count) = lexical::parse_partial::<u64, _>(&input[4..]).unwrap();
             let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
-            let mut memory_addresses: Vec<u64> = vec![];
             apply_mask_decoding(&mut memory_addresses, memory_index, mask);
-            for address in memory_addresses {
-                memory.insert(address, number);
+            for address in &memory_addresses {
+                memory.insert(*address, number);
             }
+            memory_addresses.clear();
             input = &input[9 + index_read_count + num_read_count..];
         }
     }
@@ -59,6 +60,7 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
     memory.values().sum()
 }
 
+#[inline]
 fn apply_mask_decoding(memory_addresses: &mut Vec<u64>, memory_idx: u64, mask: &[u8]) {
     let first = mask.first();
     match first {
