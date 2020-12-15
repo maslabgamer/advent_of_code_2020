@@ -49,10 +49,7 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
             let (memory_index, index_read_count) = lexical::parse_partial::<u64, _>(&input[4..]).unwrap();
             let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
             apply_mask_decoding(&mut memory_addresses, memory_index, mask);
-            for address in &memory_addresses {
-                memory.insert(*address, number);
-            }
-            memory_addresses.clear();
+            memory_addresses.drain(..).for_each(|address| { memory.insert(address, number); });
             input = &input[9 + index_read_count + num_read_count..];
         }
     }
