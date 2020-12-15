@@ -39,6 +39,7 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
     let mut mask: &[u8] = &[0];
     let mut memory: HashMap<u64, u64> = HashMap::with_capacity(600 * 36);
     let mut memory_addresses: Vec<u64> = Vec::with_capacity(512);
+    let mut total = 0;
 
     while let Some(_) = input.first() {
         let command = &input[1..4];
@@ -49,12 +50,17 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
             let (memory_index, index_read_count) = lexical::parse_partial::<u64, _>(&input[4..]).unwrap();
             let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
             apply_mask_decoding(&mut memory_addresses, memory_index, mask);
-            memory_addresses.drain(..).for_each(|address| { memory.insert(address, number); });
+            memory_addresses.drain(..).for_each(|address| {
+                if let Some(existing) = memory.insert(address, number) {
+                    total -= existing;
+                }
+                total += number;
+            });
             input = &input[9 + index_read_count + num_read_count..];
         }
     }
 
-    memory.values().sum()
+    total
 }
 
 #[inline]
@@ -71,12 +77,13 @@ fn apply_mask_decoding(memory_addresses: &mut Vec<u64>, memory_idx: u64, mask: &
                 },
                 b'1' => {
                     let memory_idx = memory_idx | 1 << mask.len() - 1;
-                    apply_mask_decoding(memory_addresses, memory_idx, &mask[1..]);
+                    apply_mask_decoding(memory_addresses, memory_idx | 1 << mask.len() - 1, &mask[1..]);
                 },
                 b'X' => {
-                    let new_memory_idx = memory_idx & !(1 << mask.len() - 1);
+                    let bit_shifted = 1 << mask.len() - 1;
+                    let new_memory_idx = memory_idx & !bit_shifted;
                     apply_mask_decoding(memory_addresses, new_memory_idx, &mask[1..]);
-                    let new_memory_idx = memory_idx | 1 << mask.len() - 1;
+                    let new_memory_idx = memory_idx | bit_shifted;
                     apply_mask_decoding(memory_addresses, new_memory_idx, &mask[1..]);
                 }
                 &_ => panic!("Invalid char"),
