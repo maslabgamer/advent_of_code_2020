@@ -13,7 +13,6 @@ fn determine_2020th_step(input: &[usize], steps: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use crate::problems::problem_15::determine_2020th_step;
-    use std::time::Instant;
 
     #[test]
     fn part_one() {
@@ -23,9 +22,7 @@ mod tests {
 
     #[test]
     fn part_two() {
-        let now = Instant::now();
         let input: &[usize; 6] = &[14, 3, 1, 0, 9, 5];
         assert_eq!(1065, determine_2020th_step(input, 30000000));
-        println!("{}", now.elapsed().as_millis());
     }
 }
