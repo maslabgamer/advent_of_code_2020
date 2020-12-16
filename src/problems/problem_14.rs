@@ -44,9 +44,9 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
     while let Some(_) = input.first() {
         let command = &input[1..4];
         if command == b"ask" {
-            mask = &input[7..43];
-            input = &input[44..];
-        } else if command == b"em[" {
+            mask = &input[7..43]; // Mask is guaranteed to be at indices 7 to 42
+            input = &input[44..]; // Update input to be after the following newline
+        } else { // If it's not a "mask" command, it's a "mem"
             let (memory_index, index_read_count) = lexical::parse_partial::<u64, _>(&input[4..]).unwrap();
             let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
             apply_mask_decoding(&mut memory_addresses, memory_index, mask);
@@ -56,7 +56,7 @@ pub fn initialize_memory_decoder(input: &[u8]) -> u64 {
                 }
                 total += number;
             });
-            input = &input[9 + index_read_count + num_read_count..];
+            input = &input[9 + index_read_count + num_read_count..]; // Update input to be after the following newline
         }
     }
 
