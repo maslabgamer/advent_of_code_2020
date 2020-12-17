@@ -50,19 +50,10 @@ pub fn run_six_cycles(input: &[u8], consider_fourth_dimension: bool) -> usize {
         input = &input[1..];
     }
 
+    let mut new_alive_set: HashSet<(i32, i32, i32, i32)> = HashSet::with_capacity(2000);
     for _ in 0..6 {
-        let mut new_alive_set: HashSet<(i32, i32, i32, i32)> = HashSet::with_capacity(2000);
         let mut cells: HashMap<(i32, i32, i32, i32), u32> = HashMap::new();
         for alive_cell in &alive_cells {
-            // for x in alive_cell.0 - 1..alive_cell.0 + 2 {
-            //     for y in alive_cell.1 - 1..alive_cell.1 + 2 {
-            //         for z in alive_cell.2 - 1..alive_cell.2 + 2 {
-            //             for w in alive_cell.3 - 1..alive_cell.3 + 2 {
-            //                 *cells.entry((x, y, z, w)).or_insert(0) += 1;
-            //             }
-            //         }
-            //     }
-            // }
             neighbor_func(*alive_cell, &mut cells);
         }
 
@@ -72,6 +63,7 @@ pub fn run_six_cycles(input: &[u8], consider_fourth_dimension: bool) -> usize {
             }
         }
         alive_cells = new_alive_set.clone();
+        new_alive_set.clear();
     }
 
     alive_cells.len()
