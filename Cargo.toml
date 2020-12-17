@@ -32,3 +32,7 @@ harness = false
 [[bench]]
 name = "problem_16_benchmark"
 harness = false
+
+[[bench]]
+name = "problem_17_benchmark"
+harness = false

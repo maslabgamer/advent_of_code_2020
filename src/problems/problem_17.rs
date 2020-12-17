@@ -1,6 +1,31 @@
 use std::collections::{HashMap, HashSet};
 
-fn run_six_cycles(input: &[u8]) -> usize {
+pub fn run_six_cycles(input: &[u8], consider_fourth_dimension: bool) -> usize {
+    let neighbor_func = match consider_fourth_dimension {
+        true => {
+            |(x, y, z, w), cells: &mut HashMap<(i32, i32, i32, i32), u32>|
+                for x in x - 1..x + 2 {
+                    for y in y - 1..y + 2 {
+                        for z in z - 1..z + 2 {
+                            for w in w - 1..w + 2 {
+                                *cells.entry((x, y, z, w)).or_insert(0) += 1;
+                            }
+                        }
+                    }
+                }
+        }
+        false => {
+            |(x, y, z, _), cells: &mut HashMap<(i32, i32, i32, i32), u32>|
+                for x in x - 1..x + 2 {
+                    for y in y - 1..y + 2 {
+                        for z in z - 1..z + 2 {
+                            *cells.entry((x, y, z, 0)).or_insert(0) += 1;
+                        }
+                    }
+                }
+        }
+    };
+
     let mut input = input;
     let mut x: i32 = 0;
     let mut y: i32 = 0;
@@ -29,15 +54,16 @@ fn run_six_cycles(input: &[u8]) -> usize {
         let mut new_alive_set: HashSet<(i32, i32, i32, i32)> = HashSet::with_capacity(2000);
         let mut cells: HashMap<(i32, i32, i32, i32), u32> = HashMap::new();
         for alive_cell in &alive_cells {
-            for x in alive_cell.0 - 1..alive_cell.0 + 2 {
-                for y in alive_cell.1 - 1..alive_cell.1 + 2 {
-                    for z in alive_cell.2 - 1..alive_cell.2 + 2 {
-                        for w in alive_cell.3 - 1..alive_cell.3 + 2 {
-                            *cells.entry((x, y, z, w)).or_insert(0) += 1;
-                        }
-                    }
-                }
-            }
+            // for x in alive_cell.0 - 1..alive_cell.0 + 2 {
+            //     for y in alive_cell.1 - 1..alive_cell.1 + 2 {
+            //         for z in alive_cell.2 - 1..alive_cell.2 + 2 {
+            //             for w in alive_cell.3 - 1..alive_cell.3 + 2 {
+            //                 *cells.entry((x, y, z, w)).or_insert(0) += 1;
+            //             }
+            //         }
+            //     }
+            // }
+            neighbor_func(*alive_cell, &mut cells);
         }
 
         for (k, v) in cells.iter() {
@@ -54,19 +80,16 @@ fn run_six_cycles(input: &[u8]) -> usize {
 #[cfg(test)]
 mod tests {
     use crate::problems::problem_17::run_six_cycles;
-    use std::time::Instant;
 
     #[test]
     fn part_1() {
         let input = include_bytes!("../../resources/problem_17_input.txt");
-        assert_eq!(211, run_six_cycles(input));
+        assert_eq!(211, run_six_cycles(input, false));
     }
 
     #[test]
     fn part_2() {
-        let now = Instant::now();
         let input = include_bytes!("../../resources/problem_17_input.txt");
-        assert_eq!(1952, run_six_cycles(input));
-        println!("{}", now.elapsed().as_millis());
+        assert_eq!(1952, run_six_cycles(input, true));
     }
 }
