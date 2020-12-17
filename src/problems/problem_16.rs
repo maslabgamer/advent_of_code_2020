@@ -48,7 +48,7 @@ pub fn parse_valid_tickets(input: &str) -> u64 {
         let mut field_ranges = line_split.next().unwrap().trim().split(" or ");
         fields.insert(
             field_name,
-            (parse_range(field_ranges.next().unwrap()), parse_range(field_ranges.next().unwrap()))
+            (parse_range(field_ranges.next().unwrap()), parse_range(field_ranges.next().unwrap())),
         );
     }
     // We just want my ticket info
@@ -57,6 +57,12 @@ pub fn parse_valid_tickets(input: &str) -> u64 {
     input_iter.next();
     input_iter.next();
 
+    // This can absolutely be improved. Currently splitting on one line and parsing all items in
+    // it when I don't even know if I'll need that line is a waste of cycles.
+    // Possible improvement: Revert to manually parsing items here, validate each one at a time
+    // If number is valid, add it to a "current ticket"
+    // If number is not valid, continue on to the next line
+    // Would also not really be any messier than this monstrosity here
     let mut valid_tickets: Vec<Vec<u32>> = Vec::with_capacity(280);
     'outer: while let Some(line) = input_iter.next() {
         let line: Vec<u32> = line.split(',').map(|i| i.parse::<u32>().unwrap()).collect();
@@ -71,28 +77,36 @@ pub fn parse_valid_tickets(input: &str) -> u64 {
     // So basically, we know there is one answer.
     // This means that if we check all indices 'i' for all lines against our 'fields' hashmap
     // there will be an index 'i' that fits into a single field
-    // Remove that field and iterate again, and there will be another field that matches appropriately
+    // Remove that field and filter again, and there will be another field that matches appropriately
+    // Do this until our original fields map is empty and we'll eventually filter down properly
     let mut answer: u64 = 1;
-    let mut indices_to_ignore: HashSet<usize> = HashSet::with_capacity(my_ticket.len());
-    let mut matching_field_counts: HashMap<&str, Vec<usize>> = HashMap::with_capacity(my_ticket.len());
-    while !fields.is_empty() {
-        for idx in 0..my_ticket.len() {
-            if !indices_to_ignore.contains(&idx) {
-                let nested_elements: Vec<u32> = valid_tickets.iter().map(|ticket| ticket[idx]).collect();
-                for (key, (left_range, right_range)) in &fields {
-                    if nested_elements.iter().all(|number| left_range.contains(number) || right_range.contains(number)) {
-                        matching_field_counts.entry(key).or_insert(vec![]).push(idx);
-                    }
-                }
+    let mut matching_field_counts: HashMap<&str, HashSet<usize>> = HashMap::with_capacity(my_ticket.len());
+
+    for idx in 0..my_ticket.len() {
+        let nested_elements: Vec<u32> = valid_tickets.iter().map(|ticket| ticket[idx]).collect();
+        for (key, (left_range, right_range)) in &fields {
+            if nested_elements.iter().all(|number| left_range.contains(number) || right_range.contains(number)) {
+                matching_field_counts.entry(key).or_insert(HashSet::with_capacity(my_ticket.len())).insert(idx);
             }
         }
+    }
 
-        for (removal_field, idx_to_ignore) in matching_field_counts.drain().filter(|(_, v)| v.len() == 1) {
+    while !matching_field_counts.is_empty() {
+        let mut fields_to_remove: Vec<&str> = vec![];
+        let mut indices_to_remove: Vec<usize> = vec![];
+        for (removal_field, idx_to_ignore) in matching_field_counts.iter().filter(|(_, v)| v.len() == 1) {
+            let first_index = *idx_to_ignore.iter().next().unwrap();
             if removal_field.starts_with("departure") {
-                answer *= my_ticket[idx_to_ignore[0]];
+                answer *= my_ticket[first_index];
             }
-            indices_to_ignore.insert(idx_to_ignore[0]);
-            fields.remove(removal_field);
+            fields_to_remove.push(removal_field);
+            indices_to_remove.push(first_index);
+        }
+
+        fields_to_remove.iter().for_each(|&field| { matching_field_counts.remove(field); });
+
+        for (_, indices) in matching_field_counts.iter_mut() {
+            &indices_to_remove.iter().for_each(|i| { indices.remove(i); });
         }
     }
 
