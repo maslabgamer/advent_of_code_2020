@@ -110,7 +110,6 @@ fn run_six_cycles(input: &[u8]) -> usize {
     let mut y: i32 = 0;
 
     let mut cells: HashMap<Coordinates, MapCell> = HashMap::with_capacity(2_560_000);
-    println!("done initializing map");
 
     while let Some(current_char) = input.first() {
         match current_char {
