@@ -1,15 +1,9 @@
-use aoc_2020::passport::Passport;
+use crate::passport::Passport;
 
-fn main() {
-    println!("Problem 4 solution: {}", process_problem());
-}
-
-fn process_problem() -> usize {
-    let passports_lines: Vec<&str> = include_str!("../../resources/problem_4_input.txt").lines().collect();
-
+fn process_problem(input: &str) -> usize {
     let mut passports = vec![Passport::new()];
 
-    for line in passports_lines {
+    for line in input.lines() {
         let line = line.trim();
         if line.len() == 0 {
             // Make a new passport here
@@ -26,4 +20,15 @@ fn process_problem() -> usize {
     }
 
     passports.iter().filter(|&passport| passport.is_valid()).count()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::problems::problem_4::process_problem;
+
+    #[test]
+    fn part_one() {
+        let input = include_str!("../../resources/problem_4_input.txt");
+        assert_eq!(172, process_problem(input));
+    }
 }

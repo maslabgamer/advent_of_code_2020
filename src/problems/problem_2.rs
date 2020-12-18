@@ -6,18 +6,12 @@ enum FuncSelect {
     Part2
 }
 
-fn main() {
-    println!("Problem 2 part 1 solution: {}", problem_2(FuncSelect::Part1));
-    println!("Problem 2 part 2 solution: {}", problem_2(FuncSelect::Part2));
-}
-
-fn problem_2(function_selection: FuncSelect) -> i32 {
-    let passwords: Vec<&str> = include_str!("../../resources/problem_2_input.txt").lines().collect();
+fn problem_2(passwords: &str, function_selection: FuncSelect) -> i32 {
     let mut valid_pass_count: i32 = 0;
 
     let re = Regex::new(r"(?P<min>\d*)-(?P<max>\d*) (?P<char>.): (?P<password>.*)").unwrap();
 
-    for password in passwords {
+    for password in passwords.lines() {
         let caps = re.captures(password.as_ref()).unwrap();
 
         let left_num = caps["min"].parse::<usize>().unwrap();
@@ -40,4 +34,21 @@ fn problem_2(function_selection: FuncSelect) -> i32 {
     }
 
     valid_pass_count
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::problems::problem_2::{problem_2, FuncSelect};
+
+    #[test]
+    fn part_one() {
+        let input = include_str!("../../resources/problem_2_input.txt");
+        assert_eq!(506, problem_2(input, FuncSelect::Part1));
+    }
+
+    #[test]
+    fn part_two() {
+        let input = include_str!("../../resources/problem_2_input.txt");
+        assert_eq!(443, problem_2(input, FuncSelect::Part2));
+    }
 }
