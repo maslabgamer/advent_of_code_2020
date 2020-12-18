@@ -62,6 +62,6 @@ mod tests {
     #[test]
     fn part_one() {
         let input = include_bytes!("../../resources/problem_18_input.txt");
-        println!("{}", evaluate_all_expressions(input));
+        assert_eq!(3647606140187, evaluate_all_expressions(input));
     }
 }
