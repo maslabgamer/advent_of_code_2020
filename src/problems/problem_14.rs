@@ -1,35 +1,34 @@
 use std::collections::HashMap;
 
+#[inline]
+fn mask_char(mask: &str, one_char: char) -> u64 {
+    mask.chars().fold(0, |acc, mask_char| {
+        (acc << 1) | (mask_char == one_char) as u64
+    })
+}
+
 // Part 1
 pub fn initialize_memory(input: &[u8]) -> u64 {
     let mut input = input;
-    let mut mask: &[u8] = &[0];
-    let mut memory: HashMap<i32, (u64, &[u8])> = HashMap::new();
+    // let mut mask: &str = &[0];
+    let mut and_mask = !0u64;
+    let mut or_mask = 0u64;
+    let mut memory: HashMap<i32, u64> = HashMap::new();
 
-    while let Some(_) = input.first() {
+    while !input.is_empty() {
         if &input[0..4] == b"mask" {
-            mask = &input[7..43];
+            let mask = unsafe { std::str::from_utf8_unchecked(&input[7..43]) };
+            and_mask = !mask_char(mask, '0');
+            or_mask = mask_char(mask, '1');
             input = &input[44..];
         } else { // If command is not "mask", it's "mem"
             let (memory_index, index_read_count) = lexical::parse_partial::<i32, _>(&input[4..]).unwrap();
             let (number, num_read_count) = lexical::parse_partial::<u64, _>(&input[8 + index_read_count..]).unwrap();
-            memory.insert(memory_index, (number, mask.clone()));
+            memory.insert(memory_index, (number & and_mask) | or_mask);
             input = &input[9 + index_read_count + num_read_count..];
         }
     }
-    memory.values().map(|(value, mask)| apply_mask(*value, mask)).sum()
-}
-
-#[inline]
-fn apply_mask(mut number: u64, mask: &[u8]) -> u64 {
-    mask.iter().enumerate()
-        .filter(|(_, &c)| c != b'X')
-        .for_each(|(i, m)| match m {
-            b'0' => number &= !(1 << 35 - i),
-            b'1' => number |= 1 << 35 - i,
-            _ => panic!("Invalid mask char!")
-        });
-    number
+    memory.values().sum()
 }
 
 // Part 2
@@ -67,16 +66,16 @@ fn apply_mask_decoding(memory_addresses: &mut Vec<u64>, memory_idx: u64, mask: &
     match first {
         None => {
             memory_addresses.push(memory_idx)
-        },
+        }
         Some(c) => {
             match c {
                 b'0' => {
                     apply_mask_decoding(memory_addresses, memory_idx, &mask[1..]);
-                },
+                }
                 b'1' => {
                     let memory_idx = memory_idx | 1 << mask.len() - 1;
                     apply_mask_decoding(memory_addresses, memory_idx | 1 << mask.len() - 1, &mask[1..]);
-                },
+                }
                 b'X' => {
                     let bit_shifted = 1 << mask.len() - 1;
                     let new_memory_idx = memory_idx & !bit_shifted;
