@@ -1,4 +1,6 @@
-fn evaluate_all_expressions(input: &[u8]) -> u64 {
+use std::ops::{Add, Sub, Mul};
+
+pub fn evaluate_all_expressions(input: &[u8]) -> u64 {
     let mut input = input;
 
     let mut left_stack: Vec<u64> = vec![];
@@ -12,14 +14,14 @@ fn evaluate_all_expressions(input: &[u8]) -> u64 {
     let mut total = 0;
     while let Some(first) = input.first() {
         match first {
-            b'+' => current_operation = Some(|a, b| a + b),
-            b'-' => current_operation = Some(|a, b| a - b),
-            b'*' => current_operation = Some(|a, b| a * b),
+            b'+' => current_operation = Some(u64::add),
+            b'-' => current_operation = Some(u64::sub),
+            b'*' => current_operation = Some(u64::mul),
             b'(' => {
                 match current_operation {
                     None => {
                         left_stack.push(0);
-                        op_stack.push(|a, b| a + b);
+                        op_stack.push(u64::add);
                     }
                     Some(some_op) => {
                         left_stack.push(left_side);
